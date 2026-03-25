@@ -1,152 +1,222 @@
 "use client";
+import { useState, useEffect, memo } from "react";
+import { motion, AnimatePresence, useMotionValue, useSpring } from "framer-motion";
+import { 
+  FaUserTie, FaCode, FaStethoscope, FaUtensils, 
+  FaUserSecret, FaPencilRuler, FaToolbox, FaMusic 
+} from "react-icons/fa";
 
-import { useRef, useState } from "react";
-import { FileUp, Target } from "lucide-react";
+// --- 🐟 1. THE HIRING OCEAN (BACKGROUND) ---
+const ProfessionFish = memo(({ icon: Icon, label, x, y, delay }: any) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ 
+      opacity: [0.15, 0.4, 0.15], 
+      y: ["0vh", "3vh", "0vh"],
+      x: ["0vw", "1vw", "0vw"]
+    }}
+    transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay }}
+    className="absolute flex items-center gap-2 text-cyan-400/40 pointer-events-none select-none mix-blend-screen"
+    style={{ left: x, top: y }}
+  >
+    <Icon className="text-3xl" />
+    <span className="font-mono text-[9px] font-black tracking-[0.5em] uppercase text-white/60">{label}</span>
+  </motion.div>
+));
+
+// --- 🫧 2. BUBBLE PHYSICS (UP & DOWN) ---
+const Bubble = memo(({ x, size, delay, direction }: any) => (
+  <motion.div
+    initial={{ y: direction === "up" ? "110vh" : "-20vh", x, scale: 0 }}
+    animate={{ y: direction === "up" ? "-20vh" : "110vh", scale: [1, 1.3, 1] }}
+    transition={{ duration: 1.5, ease: "linear", repeat: Infinity, delay }}
+    className="fixed pointer-events-none z-[9999] bg-white rounded-full shadow-[0_0_15px_white]"
+    style={{ width: size, height: size }}
+  />
+));
+
+// --- ⌨️ 3. TYPEWRITER ENGINE ---
+const Typewriter = ({ text }: { text: string }) => {
+  const [displayedText, setDisplayedText] = useState("");
+  useEffect(() => {
+    setDisplayedText(""); 
+    let i = 0;
+    const interval = setInterval(() => {
+      setDisplayedText(text.slice(0, i + 1));
+      i++;
+      if (i >= text.length) {
+        setDisplayedText(text); // Safety net to show 100% of text
+        clearInterval(interval);
+      }
+    }, 15);
+    return () => clearInterval(interval);
+  }, [text]);
+
+  return (
+    <div className="space-y-6 font-mono text-xs">
+      {displayedText.split('\n').map((line, i) => {
+        const isHeader = line.includes("ASSETS") || line.includes("VULNERABILITIES");
+        const isRed = line.includes("VULNERABILITIES");
+        return (
+          <p key={i} className={`
+            ${isHeader ? 'text-xs font-black tracking-[0.4em] mb-2 mt-6' : 'text-lg font-bold italic border-l-4 border-black/10 pl-4'}
+            ${isRed ? 'text-red-600' : isHeader ? 'text-cyan-600' : 'text-black'}
+          `}>
+            {line}
+          </p>
+        );
+      })}
+    </div>
+  );
+};
 
 export default function Home() {
-  const [resume, setResume] = useState<File | null>(null);
-  const [role, setRole] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [userInput, setUserInput] = useState("");
+  const [result, setResult] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [surfacing, setSurfacing] = useState(false);
+  const [showResult, setShowResult] = useState(false);
+  const [probability, setProbability] = useState(0);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setResume(e.target.files[0]);
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const springX = useSpring(mouseX, { stiffness: 200, damping: 20 });
+  const springY = useSpring(mouseY, { stiffness: 200, damping: 20 });
+
+  const [fishes] = useState(() => {
+    const icons = [FaUserTie, FaCode, FaStethoscope, FaUtensils, FaUserSecret, FaPencilRuler, FaToolbox, FaMusic];
+    const labels = ["CEO", "DEV", "DOCTOR", "CHEF", "AGENT", "DESIGNER", "MECHANIC", "ARTIST"];
+    return Array.from({ length: 35 }).map((_, i) => ({
+      id: i, icon: icons[i % icons.length], label: labels[i % labels.length],
+      x: `${Math.random() * 95}%`, y: `${Math.random() * 95}%`, delay: Math.random() * 6
+    }));
+  });
+
+  const [bubbles] = useState(() => 
+    Array.from({ length: 50 }).map((_, i) => ({
+      id: i, x: `${Math.random() * 100}vw`, size: Math.random() * 30 + 10, delay: Math.random() * 1
+    }))
+  );
+
+  const handleScan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userInput || loading) return;
+    setLoading(true);
+    setShowResult(false);
+    setProbability(Math.floor(Math.random() * 95) + 5);
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: userInput }),
+      });
+      const data = await res.json();
+      setTimeout(() => {
+        setResult(data.text);
+        setLoading(false);
+        setShowResult(true);
+      }, 3000);
+    } catch (err) {
+      setLoading(false);
+      setResult("SYSTEM ERROR: BREACH IN HULL.");
+      setShowResult(true);
     }
   };
 
-  const handleCardClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    // placeholder for submit logic
-    setTimeout(() => setIsLoading(false), 1500);
+  const handleResurface = () => {
+    setSurfacing(true);
+    setTimeout(() => {
+      setSurfacing(false);
+      setShowResult(false);
+      setUserInput("");
+    }, 2000);
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col font-sans">
-      {/* HEADER */}
-      <header className="flex items-center h-16 px-8 border-b border-slate-800">
-        <div className="text-2xl tracking-widest font-bold text-[#BDB5D5] select-none">
-          WISTERIA
-        </div>
-      </header>
+    <main 
+      onMouseMove={(e) => { mouseX.set(e.clientX); mouseY.set(e.clientY); }}
+      className="relative min-h-screen flex items-center justify-center bg-black overflow-hidden cursor-none p-6"
+    >
+      {/* 🌊 BACKGROUND OCEAN */}
+      <div className="absolute inset-0 z-0">
+        {fishes.map(f => <ProfessionFish key={f.id} {...f} />)}
+      </div>
 
-      {/* HERO */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4">
-        <div className="max-w-xl text-center mb-12">
-          <h1 className="text-5xl md:text-6xl font-bold mb-5 leading-tight text-[#BDB5D5] drop-shadow-[0_4px_24px_rgba(189,181,213,0.28)]">
-            Optimizing Growth
-          </h1>
-          <p className="text-slate-300 tracking-wide text-lg md:text-xl font-light">
-            The AI engine for matching your resume to the world’s best roles—uncover insights, close skill gaps, and supercharge your career trajectory.
-          </p>
-        </div>
+      {/* 🚢 SUBMARINE CURSOR */}
+      <motion.div style={{ x: springX, y: springY }} className="fixed top-0 left-0 z-[1001] -ml-12 -mt-8 pointer-events-none mix-blend-difference">
+        <svg width="100" height="60" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
+          <path d="M2 12c0-3 4-5 10-5s10 2 10 5-4 5-10 5-10-2-10-5Z" />
+          <path d="M12 7V4h3" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      </motion.div>
 
-        {/* FEATURES */}
-        <form
-          className="flex flex-col md:flex-row gap-8 md:gap-14 items-stretch w-full max-w-3xl"
-          onSubmit={handleSubmit}
-        >
-          {/* RESUME CARD */}
-          <div
-            className="flex flex-1 flex-col items-center justify-center bg-slate-900/60 border border-slate-800 rounded-2xl py-8 px-6 cursor-pointer hover:border-[#BDB5D5] group transition-all"
-            onClick={handleCardClick}
-          >
-            <input
-              type="file"
-              accept=".pdf,.doc,.docx"
-              onChange={handleFileChange}
-              ref={fileInputRef}
-              className="hidden"
-            />
-            <div className="flex flex-col items-center justify-center">
-              <span className="rounded-full h-14 w-14 flex items-center justify-center bg-slate-800 group-hover:bg-[#BDB5D5]/10 mb-3 transition-all">
-                <FileUp size={32} className="text-[#BDB5D5]" />
-              </span>
-              <div className="text-lg font-medium mb-1">Resume</div>
-              <div className="text-slate-400 text-sm">
-                {resume ? (
-                  <span className="text-[#BDB5D5]">{resume.name}</span>
-                ) : (
-                  <>Click to upload (.pdf, .doc, .docx)</>
-                )}
-              </div>
+      {/* 🫧 LOADING / SURFACING OVERLAYS */}
+      <AnimatePresence>
+        {(loading || surfacing) && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[9998] bg-[#000814]">
+            {bubbles.map(b => <Bubble key={b.id} {...b} direction={loading ? "up" : "down"} />)}
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <h2 className="text-white font-black text-6xl tracking-[0.5em] animate-pulse italic uppercase">
+                {loading ? "Descending" : "Surfacing"}
+              </h2>
             </div>
-          </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-          {/* ROLE CARD */}
-          <div className="flex flex-1 flex-col items-center justify-center bg-slate-900/60 border border-slate-800 rounded-2xl py-8 px-6">
-            <span className="rounded-full h-14 w-14 flex items-center justify-center bg-slate-800 mb-3">
-              <Target size={32} className="text-[#BDB5D5]" />
-            </span>
-            <div className="text-lg font-medium mb-1">Target Role</div>
-            <input
-              type="text"
-              required
-              placeholder="e.g. Senior Product Manager"
-              value={role}
-              onChange={e => setRole(e.target.value)}
-              className="w-full mt-2 px-3 py-2 text-base rounded-md bg-slate-950 border border-slate-800 focus:border-[#BDB5D5] focus:ring-2 focus:ring-[#BDB5D5]/25 outline-none placeholder-slate-500 transition-all"
-              style={{ maxWidth: 320 }}
-            />
-          </div>
-        </form>
-
-        <button
-          type="submit"
-          onClick={handleSubmit}
-          className={`mt-10 px-7 py-3 rounded-xl font-semibold text-base bg-[#BDB5D5] shadow-[0_2px_30px_0_rgba(189,181,213,0.23)] text-slate-950 transition-all
-            ${
-              isLoading
-                ? "opacity-60 cursor-not-allowed animate-pulse"
-                : "hover:bg-[#A99BC2] hover:shadow-[0_2px_48px_0_rgba(189,181,213,0.38)] focus:ring-2 focus:ring-[#BDB5D5]"
-            } glow-btn`}
-          disabled={isLoading || !resume || !role}
-        >
-          {isLoading ? (
-            <span>
-              <svg
-                className="inline-block mr-2 w-5 h-5 animate-spin text-slate-800"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="#615686"
-                  strokeWidth="4"
-                  className="opacity-25"
+      {/* 🖥️ MAIN UI */}
+      <div className="relative z-[100] w-full max-w-lg">
+        <AnimatePresence mode="wait">
+          {!loading && !showResult && !surfacing && (
+            <motion.div key="input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
+              <h1 className="text-8xl font-black italic mb-2 tracking-tighter uppercase text-white opacity-80">Wisteria</h1>
+              <p className="text-[10px] text-cyan-500 font-mono tracking-[0.9em] mb-20 uppercase">Abyssal Terminal</p>
+              <form onSubmit={handleScan}>
+                <input 
+                  autoFocus value={userInput} onChange={(e) => setUserInput(e.target.value)}
+                  placeholder="ID PROFESSION..."
+                  className="w-full bg-transparent border-b-2 border-white/20 pb-4 text-center text-3xl font-black outline-none focus:border-cyan-500 text-white uppercase transition-all"
                 />
-                <path
-                  d="M22 12a10 10 0 0 1-10 10"
-                  stroke="#BDB5D5"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                  className="opacity-75"
-                />
-              </svg>
-              Generating...
-            </span>
-          ) : (
-            <>Generate Match Insights</>
+              </form>
+            </motion.div>
           )}
-        </button>
-      </main>
 
-      {/* CSS for glow */}
-      <style jsx global>{`
-        .glow-btn {
-          box-shadow: 0 0 20px 0 #bdb5d577, 0 0 60px 0 #bdb5d50e;
-        }
-        .glow-btn:hover {
-          box-shadow: 0 0 32px 5px #bdb5d5cc, 0 0 80px 15px #bdb5d523;
-        }
-      `}</style>
-    </div>
+          {showResult && !surfacing && (
+            <motion.div 
+            key="result" 
+            initial={{ opacity: 0, scale: 0.9 }} 
+            animate={{ opacity: 1, scale: 1 }} 
+            className="bg-white text-black p-12 rounded-[3rem] shadow-2xl w-full border-t-[16px] border-cyan-500 h-auto min-h-[500px] mb-10 z-20"
+          >
+              <div className="flex justify-between items-start mb-8 border-b border-black/5 pb-6">
+                <div>
+                  <h3 className="text-3xl font-black italic uppercase mb-1">{userInput}</h3>
+                  <p className="text-[9px] font-mono opacity-40 uppercase tracking-widest">Hadal Zone Scan Success</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[9px] font-black uppercase mb-1">Survival Odds</p>
+                  <p className={`text-4xl font-black italic ${probability < 30 ? 'text-red-600' : 'text-black'}`}>{probability}%</p>
+                </div>
+              </div>
+
+              <Typewriter text={result} />
+
+              <div className="mt-12 flex items-center justify-between pt-6 border-t border-black/5">
+                <span className="text-[7px] font-mono opacity-30 uppercase tracking-[0.3em]">Status: 10,000M_STABLE</span>
+                <button 
+                  onClick={handleResurface}
+                  className="px-10 py-3 bg-black text-white font-black text-[10px] uppercase tracking-widest hover:bg-cyan-600 transition-all rounded-full"
+                >
+                  RE-SURFACE
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <div className="absolute inset-0 z-0 bg-gradient-to-b from-blue-900/10 to-black pointer-events-none" />
+    </main>
   );
 }
