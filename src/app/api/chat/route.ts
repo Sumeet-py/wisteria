@@ -1,3 +1,4 @@
+export const maxDuration = 60;
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
@@ -20,8 +21,9 @@ export async function POST(req: Request) {
         ],
       
       generationConfig: { 
-        temperature: 0.8, 
-        maxOutputTokens: 1000 // Increased to prevent truncation
+        temperature: 0.8,
+        topP: 0.95, 
+        maxOutputTokens: 2000 // Increased to prevent truncation
       }
     });
 
