@@ -1,21 +1,16 @@
-# Wisteria
-> **A high-density WordPress UI suite for complex data visualization.**
+# WISTERIA: Abyssal Terminal 🌊
+> **An AI-powered, cinematic profession simulator set in the Hadal Zone.**
 
- 🚀 Overview
-Wisteria is a modular WordPress plugin designed to solve the problem of displaying high-density information without overwhelming the user. Developed during a 30-day technical sprint, it focuses on modern CSS architecture and reactive UI components.
+## 🚀 Overview
+Wisteria is a high-concept web interface that uses generative AI to simulate survival probability in a high-pressure "Abyssal" environment. It transforms a simple prompt into an immersive 10,000-meter descent.
 
-🛠️ Tech Stack
-* Frontend: React, CSS Grid (Custom Layouts), Flexbox
-* Backend: PHP (WordPress Plugin API)
-* Logic: Asynchronous State Management
-* Tools: Cursor, Git, GitHub CLI
+## 🛠️ The Tech Stack
+* **Frontend:** React (Next.js) & Tailwind CSS.
+* **Animations:** Framer Motion (Spring physics & AnimatePresence).
+* **Intelligence:** Integrated API (LLM-backed) to generate tactical survival reports.
+* **State:** Managed loading/surfacing cycles with asynchronous fetch calls.
 
-✨ Key Features
-Modular UI Components: Built with a "Component-First" mindset for easy scaling.
-CSS Grid Architecture: Custom-engineered layouts that remain stable across all screen sizes.
-Dynamic Data Binding: Seamlessly connects WordPress backend data to React-driven frontend views.
-
- 📦 Installation
-1. Clone the repo: `git clone https://github.com/Sumeet-py/Wisteria.git`
-2. Move the folder to your `/wp-content/plugins/` directory.
-3. Activate "Wisteria" via the WordPress Admin Dashboard.
+## ✨ Technical Highlights
+* **AI Integration:** Implemented a `/api/chat` POST route to process user professions and return structured "Tactical Assets" and "Vulnerabilities."
+* **The "Hiring Ocean":** A memoized background system of floating career-entities using custom spring physics.
+* **Typewriter Engine:** A custom-built text renderer that handles conditional styling for AI-generated system logs.
