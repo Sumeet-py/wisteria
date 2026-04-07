@@ -1,5 +1,5 @@
 # 🌊 WISTERIA: Abyssal Terminal
-> **A cinematic, AI-powered profession simulator and immersive UI experience.**
+> **Cinematic AI Diagnostic Terminal built with Next.js 14 and Framer Motion. Features real-time LLM-streaming and physics-based UI.**
 
 ## 🚀 Overview
 Wisteria is a high-concept interactive terminal that simulates a 10,000-meter "Hadal Zone" descent. It uses generative AI to analyze user professions, calculating "Survival Probability" while visualizing tactical assets and vulnerabilities through a stylized submarine interface.
